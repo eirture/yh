@@ -30,7 +30,7 @@ func (l *yamlLine) isKeyValue() bool {
 			*/
 
 			l.key = t[0]
-			l.value = strings.TrimSpace(strings.Join(t[1:len(t)], ":"))
+			l.value = strings.TrimSpace(strings.Join(t[1:], ":"))
 			return true
 
 		} else if len(t) > 2 && (strings.HasPrefix(t[len(t)-1], " ") || len(t[len(t)-1]) == 0) {
@@ -52,11 +52,7 @@ func (l *yamlLine) isKeyValue() bool {
 }
 
 func (l yamlLine) isComment() bool {
-	if string(strings.TrimSpace(l.raw)[0]) == "#" {
-		// Line is a comment
-		return true
-	}
-	return false
+	return strings.TrimSpace(l.raw)[0] == '#'
 }
 
 func (l yamlLine) valueIsBoolean() bool {
@@ -69,32 +65,19 @@ func (l yamlLine) valueIsBoolean() bool {
 
 func (l yamlLine) valueIsNumberOrIP() bool {
 	_, err := strconv.Atoi(strings.ReplaceAll(l.value, ".", ""))
-	if err == nil {
-		// Line is a number or IP
-		return true
-	}
-	return false
+	return err == nil
 }
 
 func (l yamlLine) isEmptyLine() bool {
-	if len(strings.TrimSpace(l.raw)) > 0 {
-		return false
-	}
-	return true
+	return len(strings.TrimSpace(l.raw)) == 0
 }
 
 func (l yamlLine) isElementOfList() bool {
-	if string(strings.TrimSpace(l.raw)[0]) == "-" {
-		return true
-	}
-	return false
+	return strings.TrimSpace(l.raw)[0] == '-'
 }
 
 func (l yamlLine) isUrl() bool {
-	if strings.Contains(l.raw, "://") {
-		return true
-	}
-	return false
+	return strings.Contains(l.raw, "://")
 }
 
 func (l yamlLine) indentationSpaces() int {
@@ -122,4 +105,8 @@ func (l yamlLine) valueContainsChompingIndicator() bool {
 		}
 	}
 	return false
+}
+
+func (l yamlLine) documentSeparator() bool {
+	return strings.TrimSpace(l.raw) == "---"
 }

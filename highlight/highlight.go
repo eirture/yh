@@ -46,11 +46,9 @@ func Highlight(r io.Reader) (string, error) {
 			} else if l.valueIsNumberOrIP() {
 				// The value is a number or an IP address x.x.x.x
 				buf.WriteString(keyNumberOrIP(l))
-
 			} else if l.valueIsBoolean() {
 				// The value is boolean true or false
 				buf.WriteString(keyBool(l))
-
 			} else {
 				// The is a normal key/value line
 				buf.WriteString(keyValue(l))
@@ -73,12 +71,14 @@ func Highlight(r io.Reader) (string, error) {
 		} else if !l.isEmptyLine() {
 			// This is not a YAML key: value line and is not empty
 
-			if l.isUrl() {
-				// Value is a URL
-				buf.WriteString(url(l))
-			} else if l.isComment() {
+			if l.isComment() {
 				// This line is a comment
 				buf.WriteString(comment(l))
+			} else if l.documentSeparator() {
+				buf.WriteString(documentSeparator(l))
+			} else if l.isUrl() {
+				// Value is a URL
+				buf.WriteString(url(l))
 			} else if l.isElementOfList() {
 				// This line is an element of a list
 				buf.WriteString(listElement(l))
@@ -91,7 +91,7 @@ func Highlight(r io.Reader) (string, error) {
 
 		} else if l.isEmptyLine() {
 			// This is an empty line
-			fmt.Println(l.raw)
+			buf.WriteString(l.raw + "\n")
 		}
 
 	}
@@ -100,23 +100,24 @@ func Highlight(r io.Reader) (string, error) {
 }
 
 func keyValue(l yamlLine) string {
-	return fmt.Sprintf("%v: %v\n", BrightRed(l.key), Yellow(l.value))
+	return fmt.Sprintf("%v: %v\n", Cyan(l.key), l.value)
 }
 
 func keyNumberOrIP(l yamlLine) string {
-	return fmt.Sprintf("%v: %v\n", BrightRed(l.key), Blue(l.value))
+	return fmt.Sprintf("%v: %v\n", Cyan(l.key), BrightMagenta(l.value))
 }
 
 func keyBool(l yamlLine) string {
-	return fmt.Sprintf("%v: %v\n", BrightRed(l.key), Blue(l.value))
+	return fmt.Sprintf("%v: %v\n", Cyan(l.key), BrightMagenta(l.value))
 }
 
 func comment(l yamlLine) string {
-	return fmt.Sprintf("%v %v\n", Gray(13, l.key), Gray(13, l.value))
+	return fmt.Sprintf("%v\n", Gray(13, l.raw))
 }
 
 func listElement(l yamlLine) string {
-	return fmt.Sprintf("%v\n", Yellow(l.raw))
+	ps := strings.SplitN(l.raw, "-", 2)
+	return fmt.Sprintf("%v%v\n", Yellow(ps[0]+"-"), ps[1])
 }
 
 func invalidLine(l yamlLine) string {
@@ -126,6 +127,11 @@ func invalidLine(l yamlLine) string {
 func multiline(l yamlLine) string {
 	return fmt.Sprintf("%v\n", Gray(20-1, l.raw))
 }
+
 func url(l yamlLine) string {
 	return fmt.Sprintf("%v\n", Yellow(l.raw))
+}
+
+func documentSeparator(l yamlLine) string {
+	return fmt.Sprintf("%v\n", Cyan(l.raw))
 }
